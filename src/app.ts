@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 
 import { Pool } from 'pg';
+
 import { parse } from 'pg-connection-string';
 
 // Parse connection string
@@ -25,11 +26,12 @@ app.get('/city', async (req: Request, res: Response) => {
   try {
     const client = await pool.connect();
     const result = await client.query(
-      'SELECT * FROM uscitymapapi_us_cities_nasrullah'
+      'SELECT id,city FROM uscitymapapi_us_cities_nasrullah'
     );
-    console.log('result=>', result.rows);
-    const users = result.rows;
-    res.json(users);
+    const cities = result.rows.sort(
+      (a: { city: string }, b: { city: string }) => a.city.localeCompare(b.city)
+    );
+    res.status(200).json(cities);
     client.release();
   } catch (err) {
     console.error('Error executing query', err);
