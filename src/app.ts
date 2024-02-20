@@ -1,6 +1,8 @@
 import express, { Request, Response } from 'express';
 import { Pool } from 'pg';
 import { parse } from 'pg-connection-string';
+import dotenv from 'dotenv';
+dotenv.config();
 
 interface City {
   id: number;
@@ -18,8 +20,7 @@ interface ApiCity {
 }
 
 // Parse connection string
-const connectionString =
-  'postgres://u71d53dbc3c528a482b7a1ef991aa357e:43a91fcc6e8a@SG-SharedPostgres-3990-pgsql-master.servers.mongodirector.com/b223b0c1c7933ee0bfe3d98f63f214ea';
+const connectionString = process.env.DB_CONNECTION_STRING;
 const config = parse(connectionString);
 
 const pool = new Pool({
