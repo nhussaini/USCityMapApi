@@ -1,12 +1,20 @@
 import express, { Request, Response } from 'express';
-
 import { Pool } from 'pg';
-
 import { parse } from 'pg-connection-string';
 
 interface City {
   id: number;
   name: string;
+}
+interface ApiCity {
+  id: number;
+  city: string;
+  state_id: string;
+  state_name: string;
+  lat: string;
+  lng: string;
+  population: number;
+  timezone: string;
 }
 
 // Parse connection string
@@ -31,23 +39,34 @@ app.get('/city', async (req: Request, res: Response) => {
   try {
     const client = await pool.connect();
     const result = await client.query(
-      'SELECT id,city FROM uscitymapapi_us_cities_nasrullah'
+      'SELECT * FROM uscitymapapi_us_cities_nasrullah'
     );
-    const cities = result.rows.sort(
-      (a: { city: string }, b: { city: string }) => a.city.localeCompare(b.city)
-    );
+    const cities = result.rows
+      .map((city: ApiCity) => {
+        return { id: city.id, city: city.city };
+      })
+      .sort((a: { city: string }, b: { city: string }) =>
+        a.city.localeCompare(b.city)
+      );
+    if (req.query.state_id) {
+      const stateId = req.query.state_id;
+      const filteredCities = result.rows
+        .filter((city: ApiCity) => city.state_id === stateId)
+        .map((city: ApiCity) => {
+          return { id: city.id, city: city.city };
+        });
+
+      res.status(200).json(filteredCities);
+    }
     if (req.query.page_num && req.query.page_size) {
       const page = parseInt(req.query.page_num) || 1;
-      console.log('page=>', page);
       const limit = parseInt(req.query.page_size) || 10;
-      console.log('limit=>', limit);
-      // const age = parseInt(req.query.age);
       const start = (page - 1) * limit;
       const end = start + limit;
       res.status(200).json(cities.slice(start, end));
     } else if (req.query.id) {
       const cityId = parseInt(req.query.id);
-      const city = result.rows.filter((city: City) => city.id === cityId);
+      const city = cities.filter((city: City) => city.id === cityId);
       res.status(200).json(city);
     } else {
       res.status(200).json(cities);
