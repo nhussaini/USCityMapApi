@@ -4,6 +4,11 @@ import { Pool } from 'pg';
 
 import { parse } from 'pg-connection-string';
 
+interface City {
+  id: number;
+  name: string;
+}
+
 // Parse connection string
 const connectionString =
   'postgres://u71d53dbc3c528a482b7a1ef991aa357e:43a91fcc6e8a@SG-SharedPostgres-3990-pgsql-master.servers.mongodirector.com/b223b0c1c7933ee0bfe3d98f63f214ea';
@@ -40,6 +45,10 @@ app.get('/city', async (req: Request, res: Response) => {
       const start = (page - 1) * limit;
       const end = start + limit;
       res.status(200).json(cities.slice(start, end));
+    } else if (req.query.id) {
+      const cityId = parseInt(req.query.id);
+      const city = result.rows.filter((city: City) => city.id === cityId);
+      res.status(200).json(city);
     } else {
       res.status(200).json(cities);
     }
