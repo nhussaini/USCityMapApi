@@ -31,12 +31,18 @@ app.get('/city', async (req: Request, res: Response) => {
     const cities = result.rows.sort(
       (a: { city: string }, b: { city: string }) => a.city.localeCompare(b.city)
     );
-    const page = parseInt(req.query.page_num) || 1;
-    const limit = parseInt(req.query.page_size) || 10;
-    // const age = parseInt(req.query.age);
-    const start = (page - 1) * limit;
-    const end = start + limit;
-    res.status(200).json(cities.slice(start, end));
+    if (req.query.page_num && req.query.page_size) {
+      const page = parseInt(req.query.page_num) || 1;
+      console.log('page=>', page);
+      const limit = parseInt(req.query.page_size) || 10;
+      console.log('limit=>', limit);
+      // const age = parseInt(req.query.age);
+      const start = (page - 1) * limit;
+      const end = start + limit;
+      res.status(200).json(cities.slice(start, end));
+    } else {
+      res.status(200).json(cities);
+    }
     client.release();
   } catch (err) {
     console.error('Error executing query', err);
