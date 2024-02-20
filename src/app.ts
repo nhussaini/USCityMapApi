@@ -19,7 +19,7 @@ const app = express();
 app.use(express.json());
 
 app.get('/', (req: Request, res: Response) => {
-  res.status(200).send('Welcome to SkillReactor');
+  res.status(200).send('Welcome to SkillReactor!!!');
 });
 
 app.get('/city', async (req: Request, res: Response) => {
@@ -31,7 +31,12 @@ app.get('/city', async (req: Request, res: Response) => {
     const cities = result.rows.sort(
       (a: { city: string }, b: { city: string }) => a.city.localeCompare(b.city)
     );
-    res.status(200).json(cities);
+    const page = parseInt(req.query.page_num) || 1;
+    const limit = parseInt(req.query.page_size) || 10;
+    // const age = parseInt(req.query.age);
+    const start = (page - 1) * limit;
+    const end = start + limit;
+    res.status(200).json(cities.slice(start, end));
     client.release();
   } catch (err) {
     console.error('Error executing query', err);
