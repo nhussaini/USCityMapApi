@@ -41,8 +41,9 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 app.get('/city', async (req: Request, res: Response) => {
+  let client;
   try {
-    const client = await pool.connect();
+    client = await pool.connect();
     const result = await client.query(
       'SELECT * FROM uscitymapapi_us_cities_nasrullah'
     );
@@ -80,12 +81,18 @@ app.get('/city', async (req: Request, res: Response) => {
   } catch (err) {
     console.error('Error executing query', err);
     res.status(500).send('Internal Server Error');
+  } finally {
+    if (client) {
+      // Ensure the client is released back to the pool even if an error occurs
+      client.release();
+    }
   }
 });
 //apis to get stat data
 app.get('/state', async (req: Request, res: Response) => {
+  let client;
   try {
-    const client = await pool.connect();
+    client = await pool.connect();
     const result = await client.query(
       'SELECT state_id, state_name FROM uscitymapapi_us_cities_nasrullah'
     );
@@ -126,6 +133,68 @@ app.get('/state', async (req: Request, res: Response) => {
   } catch (err) {
     console.error('Error executing query', err);
     return res.status(500).send('Internal Server Error');
+  } finally {
+    if (client) {
+      client.release();
+    }
+  }
+});
+//api to find nearest city
+app.get('/city/find', async (req: Request, res: Response) => {
+  let client;
+  try {
+    client = await pool.connect();
+    const result = await client.query(
+      'SELECT * FROM uscitymapapi_us_cities_nasrullah'
+    );
+    if (req.query.lat && req.query.lng) {
+      const lat = parseInt(req.query.lat);
+      const lng = parseInt(req.query.lng);
+      console.log('lat==>', lat);
+      console.log('lng=>', lng);
+      const city = result.rows.find(
+        (city: ApiCity) =>
+          parseInt(city.lat) === lat && parseInt(city.lng) === lng
+      );
+      if (!city) {
+        return res.status(404).json({ error: 'City not found' });
+      }
+      console.log('city=======>', city);
+      let minDistance = Number.POSITIVE_INFINITY;
+      let nearestCity: string;
+      let nearstCityId: number;
+      result.rows.forEach((dbCity: ApiCity) => {
+        // console.log('city=>', dbCity);
+        if (dbCity.id !== city.id) {
+          const dx = city.lat - Number(dbCity.lat);
+          const dy = city.lng - Number(dbCity.lng);
+          // const dx = city.lat - parseFloat(dbCity.lat);
+          // const dy = city.lng - parseFloat(dbCity.lng);
+          const eucDistance = Math.sqrt(dx * dx + dy * dy);
+          if (eucDistance < minDistance) {
+            minDistance = eucDistance;
+            nearestCity = dbCity.city;
+            nearstCityId = dbCity.id;
+          }
+        }
+      });
+      const resultCity: City = {
+        id: nearstCityId,
+        name: nearestCity,
+      };
+      return res.status(200).json({ city: resultCity, distance: minDistance });
+    }
+
+    // console.log('desired city=>', city);
+
+    // console.log('lat and lng=>', lat, lng);
+  } catch (err) {
+    console.error('Error executing query', err);
+    return res.status(500).send('Internal Server Error');
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
 });
 
