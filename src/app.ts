@@ -18,6 +18,10 @@ interface ApiCity {
   population: number;
   timezone: string;
 }
+interface DbState {
+  state_id: string;
+  state_name: string;
+}
 
 // Parse connection string
 const connectionString = process.env.DB_CONNECTION_STRING;
@@ -73,6 +77,38 @@ app.get('/city', async (req: Request, res: Response) => {
       res.status(200).json(cities);
     }
     client.release();
+  } catch (err) {
+    console.error('Error executing query', err);
+    res.status(500).send('Internal Server Error');
+  }
+});
+//apis to get stat data
+app.get('/state', async (req: Request, res: Response) => {
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      'SELECT state_id, state_name FROM uscitymapapi_us_cities_nasrullah'
+    );
+
+    //keep one state from duplicates
+    const uniqueStates: DbState[] = [];
+    const stateIdSet = new Set();
+    result.rows.forEach((item: DbState) => {
+      if (!stateIdSet.has(item.state_id)) {
+        uniqueStates.push(item);
+        stateIdSet.add(item.state_id);
+      }
+    });
+    //change state format and sort them based on id
+    const finalResult = uniqueStates
+      .map((item) => {
+        return {
+          id: item.state_id,
+          state: item.state_name,
+        };
+      })
+      .sort((a, b) => a.id.localeCompare(b.id));
+    res.status(200).json(finalResult);
   } catch (err) {
     console.error('Error executing query', err);
     res.status(500).send('Internal Server Error');
