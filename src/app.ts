@@ -108,17 +108,24 @@ app.get('/state', async (req: Request, res: Response) => {
         };
       })
       .sort((a, b) => a.id.localeCompare(b.id));
+    //accept query params
     if (req.query.page_num && req.query.page_size) {
       const page = parseInt(req.query.page_num);
       const limit = parseInt(req.query.page_size);
       const start = (page - 1) * limit;
       const end = start + limit;
-      res.status(200).json(sortedAndMappedStates.slice(start, end));
+      return res.status(200).json(sortedAndMappedStates.slice(start, end));
     }
-    res.status(200).json(sortedAndMappedStates);
+    //accepts id as query param
+    if (req.query.id) {
+      const id = req.query.id;
+      const state = sortedAndMappedStates.filter((state) => state.id === id);
+      return res.status(200).json(state);
+    }
+    return res.status(200).json(sortedAndMappedStates);
   } catch (err) {
     console.error('Error executing query', err);
-    res.status(500).send('Internal Server Error');
+    return res.status(500).send('Internal Server Error');
   }
 });
 
