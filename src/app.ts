@@ -150,8 +150,6 @@ app.get('/city/find', async (req: Request, res: Response) => {
     if (req.query.lat && req.query.lng) {
       const lat = parseInt(req.query.lat);
       const lng = parseInt(req.query.lng);
-      console.log('lat==>', lat);
-      console.log('lng=>', lng);
       const city = result.rows.find(
         (city: ApiCity) =>
           parseInt(city.lat) === lat && parseInt(city.lng) === lng
@@ -159,12 +157,10 @@ app.get('/city/find', async (req: Request, res: Response) => {
       if (!city) {
         return res.status(404).json({ error: 'City not found' });
       }
-      console.log('city=======>', city);
       let minDistance = Number.POSITIVE_INFINITY;
       let nearestCity: string;
       let nearstCityId: number;
       result.rows.forEach((dbCity: ApiCity) => {
-        // console.log('city=>', dbCity);
         if (dbCity.id !== city.id) {
           const dx = city.lat - Number(dbCity.lat);
           const dy = city.lng - Number(dbCity.lng);
@@ -184,10 +180,6 @@ app.get('/city/find', async (req: Request, res: Response) => {
       };
       return res.status(200).json({ city: resultCity, distance: minDistance });
     }
-
-    // console.log('desired city=>', city);
-
-    // console.log('lat and lng=>', lat, lng);
   } catch (err) {
     console.error('Error executing query', err);
     return res.status(500).send('Internal Server Error');
