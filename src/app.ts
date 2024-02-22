@@ -185,4 +185,34 @@ app.get('/city/find', async (req: Request, res: Response) => {
     }
   }
 });
+
+// Api to get population distribution
+app.get('/city/population', async (req: Request, res: Response) => {
+  let client;
+  try {
+    client = await pool.connect();
+    const result = await client.query(
+      'SELECT id,city,population FROM uscitymapapi_us_cities_nasrullah'
+    );
+    const populationArr: number[] = [];
+    let minPopulation: number = Number.POSITIVE_INFINITY;
+    let maxPopulation: number = Number.NEGATIVE_INFINITY;
+    //find min and max population
+    result.rows.forEach((city: any) => {
+      populationArr.push(city.population);
+    });
+
+    minPopulation = Math.min(...populationArr);
+    maxPopulation = Math.max(...populationArr);
+    console.log('min population=>', minPopulation);
+    console.log('max population=>', maxPopulation);
+  } catch (err) {
+    console.error('Error executing query', err);
+    return res.status(500).send('Internal Server Error');
+  } finally {
+    if (client) {
+      client.release();
+    }
+  }
+});
 export default app;
