@@ -206,6 +206,33 @@ app.get('/city/population', async (req: Request, res: Response) => {
     maxPopulation = Math.max(...populationArr);
     console.log('min population=>', minPopulation);
     console.log('max population=>', maxPopulation);
+
+    type CityRange = {
+      [range: string]: { id: number; city: string }[];
+    };
+    const populationDistribution: CityRange = {};
+
+    for (let i = minPopulation; i <= maxPopulation; i += 1000000) {
+      const lowerBound = i;
+      const uperBound = i + 1000000;
+      const rangeKey = `${i} - ${uperBound}`;
+      result.rows.forEach((city: any) => {
+        if (city.population >= i && city.population < i + 1000000) {
+          if (!populationDistribution[rangeKey]) {
+            populationDistribution[rangeKey] = [
+              { id: city.id, city: city.city },
+            ];
+          } else {
+            populationDistribution[rangeKey].push({
+              id: city.id,
+              city: city.city,
+            });
+          }
+        }
+      });
+    }
+
+    console.log('result => ', populationDistribution);
   } catch (err) {
     console.error('Error executing query', err);
     return res.status(500).send('Internal Server Error');
