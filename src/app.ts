@@ -139,6 +139,7 @@ app.get('/state', async (req: Request, res: Response) => {
     }
   }
 });
+
 //api to find nearest city
 app.get('/city/find', async (req: Request, res: Response) => {
   let client;
@@ -154,18 +155,13 @@ app.get('/city/find', async (req: Request, res: Response) => {
         (city: ApiCity) =>
           parseInt(city.lat) === lat && parseInt(city.lng) === lng
       );
-      if (!city) {
-        return res.status(404).json({ error: 'City not found' });
-      }
       let minDistance = Number.POSITIVE_INFINITY;
       let nearestCity: string;
       let nearstCityId: number;
       result.rows.forEach((dbCity: ApiCity) => {
         if (dbCity.id !== city.id) {
-          const dx = city.lat - Number(dbCity.lat);
-          const dy = city.lng - Number(dbCity.lng);
-          // const dx = city.lat - parseFloat(dbCity.lat);
-          // const dy = city.lng - parseFloat(dbCity.lng);
+          const dx = lat - Number(dbCity.lat);
+          const dy = lng - Number(dbCity.lng);
           const eucDistance = Math.sqrt(dx * dx + dy * dy);
           if (eucDistance < minDistance) {
             minDistance = eucDistance;
@@ -189,5 +185,4 @@ app.get('/city/find', async (req: Request, res: Response) => {
     }
   }
 });
-
 export default app;
