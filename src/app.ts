@@ -157,7 +157,7 @@ app.get('/city/find', async (req: Request, res: Response) => {
       );
       let minDistance = Number.POSITIVE_INFINITY;
       let nearestCity: string;
-      let nearstCityId: number;
+      let nearestCityId: number;
       result.rows.forEach((dbCity: ApiCity) => {
         if (dbCity.id !== city.id) {
           const dx = lat - Number(dbCity.lat);
@@ -166,12 +166,12 @@ app.get('/city/find', async (req: Request, res: Response) => {
           if (eucDistance < minDistance) {
             minDistance = eucDistance;
             nearestCity = dbCity.city;
-            nearstCityId = dbCity.id;
+            nearestCityId = dbCity.id;
           }
         }
       });
       const resultCity: City = {
-        id: nearstCityId,
+        id: nearestCityId,
         name: nearestCity,
       };
       return res.status(200).json({ city: resultCity, distance: minDistance });
@@ -195,44 +195,18 @@ app.get('/city/population', async (req: Request, res: Response) => {
       'SELECT id,city,population FROM uscitymapapi_us_cities_nasrullah'
     );
     const populationArr: number[] = [];
-    let minPopulation: number = Number.POSITIVE_INFINITY;
     let maxPopulation: number = Number.NEGATIVE_INFINITY;
-    //find min and max population
+    //find max population
     result.rows.forEach((city: any) => {
       populationArr.push(city.population);
     });
 
-    minPopulation = Math.min(...populationArr);
     maxPopulation = Math.max(...populationArr);
-    console.log('min population=>', minPopulation);
-    console.log('max population=>', maxPopulation);
-
     type CityRange = {
       [range: string]: { id: number; city: string }[];
     };
     const populationDistribution: CityRange = {};
-
-    // for (let i = minPopulation; i <= maxPopulation; i += 1000000) {
-    //   const lowerBound = i;
-    //   const uperBound = i + 1000000;
-    //   const rangeKey = `${i} - ${uperBound}`;
-    //   result.rows.forEach((city: any) => {
-    //     if (city.population >= i && city.population < i + 1000000) {
-    //       if (!populationDistribution[rangeKey]) {
-    //         populationDistribution[rangeKey] = [
-    //           { id: city.id, city: city.city },
-    //         ];
-    //       } else {
-    //         populationDistribution[rangeKey].push({
-    //           id: city.id,
-    //           city: city.city,
-    //         });
-    //       }
-    //     }
-    //   });
-    // }
     for (let i = 0; i <= maxPopulation; i += 1000000) {
-      const lowerBound = i;
       const upperBound = i + 1000000;
       const rangeKey = `${i} - ${upperBound}`;
 
@@ -250,8 +224,6 @@ app.get('/city/population', async (req: Request, res: Response) => {
       });
     }
     res.status(200).json(populationDistribution);
-
-    // console.log('result => ', populationDistribution);
   } catch (err) {
     console.error('Error executing query', err);
     return res.status(500).send('Internal Server Error');
