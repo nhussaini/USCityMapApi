@@ -212,27 +212,46 @@ app.get('/city/population', async (req: Request, res: Response) => {
     };
     const populationDistribution: CityRange = {};
 
-    for (let i = minPopulation; i <= maxPopulation; i += 1000000) {
+    // for (let i = minPopulation; i <= maxPopulation; i += 1000000) {
+    //   const lowerBound = i;
+    //   const uperBound = i + 1000000;
+    //   const rangeKey = `${i} - ${uperBound}`;
+    //   result.rows.forEach((city: any) => {
+    //     if (city.population >= i && city.population < i + 1000000) {
+    //       if (!populationDistribution[rangeKey]) {
+    //         populationDistribution[rangeKey] = [
+    //           { id: city.id, city: city.city },
+    //         ];
+    //       } else {
+    //         populationDistribution[rangeKey].push({
+    //           id: city.id,
+    //           city: city.city,
+    //         });
+    //       }
+    //     }
+    //   });
+    // }
+    for (let i = 0; i <= maxPopulation; i += 1000000) {
       const lowerBound = i;
-      const uperBound = i + 1000000;
-      const rangeKey = `${i} - ${uperBound}`;
+      const upperBound = i + 1000000;
+      const rangeKey = `${i} - ${upperBound}`;
+
+      // Initialize the population distribution for this range
+      populationDistribution[rangeKey] = [];
+
+      // Filter cities based on population range
       result.rows.forEach((city: any) => {
         if (city.population >= i && city.population < i + 1000000) {
-          if (!populationDistribution[rangeKey]) {
-            populationDistribution[rangeKey] = [
-              { id: city.id, city: city.city },
-            ];
-          } else {
-            populationDistribution[rangeKey].push({
-              id: city.id,
-              city: city.city,
-            });
-          }
+          populationDistribution[rangeKey].push({
+            id: city.id,
+            city: city.city,
+          });
         }
       });
     }
+    res.status(200).json(populationDistribution);
 
-    console.log('result => ', populationDistribution);
+    // console.log('result => ', populationDistribution);
   } catch (err) {
     console.error('Error executing query', err);
     return res.status(500).send('Internal Server Error');
