@@ -3,6 +3,7 @@ import { Pool } from 'pg';
 import { parse } from 'pg-connection-string';
 import dotenv from 'dotenv';
 dotenv.config();
+import { DateTimeFormatOptions } from 'intl';
 
 interface City {
   id: number;
@@ -224,6 +225,46 @@ app.get('/city/population', async (req: Request, res: Response) => {
       });
     }
     res.status(200).json(populationDistribution);
+  } catch (err) {
+    console.error('Error executing query', err);
+    return res.status(500).send('Internal Server Error');
+  } finally {
+    if (client) {
+      client.release();
+    }
+  }
+});
+
+//Api to get timezones
+app.get('/time', async (req: Request, res: Response) => {
+  let client;
+  try {
+    client = await pool.connect();
+    const result = await client.query(
+      'SELECT timezone FROM uscitymapapi_us_cities_nasrullah'
+    );
+    const timeZoneSet = new Set();
+    result.rows.forEach((item: { timezone: string }) => {
+      // console.log('item => ', item);
+      if (!timeZoneSet.has(item.timezone)) timeZoneSet.add(item.timezone);
+    });
+    type TimeDef = {
+      name: string; // The name of the time zone
+      time: string; // The current time in that time zone in the ISO format 'YYYY-MM-DDTHH:mm:ss.SSSZ'
+    };
+    const finalResult: TimeDef[] = [];
+    for (const timeZone of timeZoneSet) {
+      const options: DateTimeFormatOptions = {
+        hour12: false,
+        timeZone: timeZone as string, // Explicitly specify type as string
+      };
+      const currentTime = new Date().toLocaleString('en-US', options);
+      const isoFormattedTime = new Date(currentTime).toISOString();
+      // console.log('isoFormattedTime===>', timeZone, isoFormattedTime);
+      finalResult.push({ name: timeZone as string, time: isoFormattedTime });
+    }
+    // console.log('result=>', timeZoneSet);
+    res.status(200).json(finalResult);
   } catch (err) {
     console.error('Error executing query', err);
     return res.status(500).send('Internal Server Error');
